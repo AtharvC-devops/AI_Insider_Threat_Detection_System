@@ -78,9 +78,18 @@ npm run dev
 
 ### Option 2: Docker Compose (PostgreSQL + FastAPI + Nginx Frontend)
 
-Copy `.env.example` to `.env` and set unique values for `SECRET_KEY` and
-`POSTGRES_PASSWORD` before starting the containers. Use an alphanumeric
-PostgreSQL password so it can be safely included in `DATABASE_URL`.
+Before starting the containers, create a `.env` file with unique values for
+`SECRET_KEY`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and
+`DATABASE_URL`. Use an alphanumeric PostgreSQL password so it can be safely
+included in the URL, for example:
+
+```dotenv
+SECRET_KEY=replace-with-a-unique-random-secret
+POSTGRES_USER=soc_admin
+POSTGRES_PASSWORD=replace-with-a-strong-alphanumeric-password
+POSTGRES_DB=insider_threat_db
+DATABASE_URL=postgresql://soc_admin:replace-with-a-strong-alphanumeric-password@postgres:5432/insider_threat_db
+```
 
 ```bash
 docker-compose up --build

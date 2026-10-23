@@ -4,7 +4,9 @@ import {
   User, Shield, Laptop, HardDrive, Key, ArrowLeft,
   Activity, Cpu, Radio, AlertTriangle, Clock, BarChart2
 } from 'lucide-react';
-import { employeeAPI, activityAPI, uebaAPI, anomalyAPI } from '../services/api';
+import {
+  activityAPI, anomalyAPI, employeeAPI, isServerlessDeployment, uebaAPI
+} from '../services/api';
 import { RiskBadge, SeverityBadge } from '../components/RiskBadge';
 import { AnomalyExplainModal } from '../components/AnomalyExplainModal';
 
@@ -23,16 +25,20 @@ export const EmployeeDetailPage = () => {
 
   const fetchEmployeeFullDetails = async () => {
     try {
-      const [empRes, actRes, uebaRes, expRes] = await Promise.all([
+      const [empRes, actRes] = await Promise.all([
         employeeAPI.getEmployee(id),
-        activityAPI.getActivities({ employee_id: id, limit: 15 }),
-        uebaAPI.getPeerComparison(id),
-        anomalyAPI.getExplanation(id)
+        activityAPI.getActivities({ employee_id: id, limit: 15 })
       ]);
       setEmployee(empRes.data);
       setActivities(actRes.data);
-      setPeerComp(uebaRes.data);
-      setExplainData(expRes.data);
+      if (!isServerlessDeployment) {
+        const [uebaRes, expRes] = await Promise.all([
+          uebaAPI.getPeerComparison(id),
+          anomalyAPI.getExplanation(id)
+        ]);
+        setPeerComp(uebaRes.data);
+        setExplainData(expRes.data);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,12 +61,12 @@ export const EmployeeDetailPage = () => {
         <Link to="/employees" className="text-xs text-slate-400 hover:text-cyan-400 flex items-center gap-1.5">
           <ArrowLeft className="w-4 h-4" /> Back to Identity Roster
         </Link>
-        <button
+        {!isServerlessDeployment && <button
           onClick={() => setIsExplainOpen(true)}
           className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-cyan-950/50"
         >
           <Cpu className="w-4 h-4" /> Open XAI Diagnosis (SHAP & LIME)
-        </button>
+        </button>}
       </div>
 
       {/* Identity Summary Card */}
@@ -120,6 +126,7 @@ export const EmployeeDetailPage = () => {
         </div>
       </div>
 
+      {!isServerlessDeployment && <>
       {/* UEBA Peer Comparison Table */}
       <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5">
         <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 mb-4">
@@ -163,6 +170,7 @@ export const EmployeeDetailPage = () => {
           </table>
         </div>
       </div>
+      </>}
 
       {/* Activity Timeline */}
       <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5">
@@ -195,11 +203,11 @@ export const EmployeeDetailPage = () => {
       </div>
 
       {/* Diagnosis Modal */}
-      <AnomalyExplainModal
+      {!isServerlessDeployment && <AnomalyExplainModal
         isOpen={isExplainOpen}
         onClose={() => setIsExplainOpen(false)}
         explanationData={explainData}
-      />
+      />}
     </div>
   );
 };

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Mail, ArrowRight, UserCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isServerlessDeployment } from '../services/api';
 
 export const Login = () => {
-  const [email, setEmail] = useState('analyst@soc.corp');
-  const [password, setPassword] = useState('analyst123');
+  const [email, setEmail] = useState(isServerlessDeployment ? '' : 'analyst@soc.corp');
+  const [password, setPassword] = useState(isServerlessDeployment ? '' : 'analyst123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -97,7 +98,11 @@ export const Login = () => {
           </button>
         </form>
 
-        {/* Demo Quick Select Persona Buttons */}
+        {isServerlessDeployment ? (
+          <p className="mt-6 border-t border-slate-800/80 pt-5 text-xs text-slate-400">
+            Use the administrator account configured for this deployment. Demo persona accounts are not created automatically.
+          </p>
+        ) : (
         <div className="mt-8 pt-6 border-t border-slate-800/80">
           <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <UserCheck className="w-3.5 h-3.5 text-cyan-400" /> Quick Persona Login (Evaluation / Viva)
@@ -137,6 +142,7 @@ export const Login = () => {
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

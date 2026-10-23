@@ -3,10 +3,10 @@ import {
   Activity, Cpu, Network, Radio, Clock, ShieldAlert,
   Layers, HardDrive, RefreshCw, AlertCircle
 } from 'lucide-react';
-import { dashboardAPI, anomalyAPI } from '../services/api';
+import { anomalyAPI, dashboardAPI, isServerlessDeployment } from '../services/api';
 import { StatsCard } from '../components/StatsCard';
-import { EntityGraph } from '../components/EntityGraph';
 import { SeverityBadge } from '../components/RiskBadge';
+import { EntityGraph } from '../components/EntityGraph';
 
 export const SocDashboard = () => {
   const [data, setData] = useState(null);
@@ -20,12 +20,12 @@ export const SocDashboard = () => {
 
   const fetchSocData = async () => {
     try {
-      const [socRes, graphRes] = await Promise.all([
-        dashboardAPI.getSocDashboard(),
-        anomalyAPI.getGraphNetwork()
-      ]);
+      const socRes = await dashboardAPI.getSocDashboard();
       setData(socRes.data);
-      setGraphData(graphRes.data);
+      if (!isServerlessDeployment) {
+        const graphRes = await anomalyAPI.getGraphNetwork();
+        setGraphData(graphRes.data);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,7 +56,11 @@ export const SocDashboard = () => {
               SIEM / UEBA STREAM
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">Multi-sensor log ingestion, PyTorch GNN embeddings, and entity relationship topologies</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {isServerlessDeployment
+              ? 'Core telemetry view; ML analysis and entity topology are disabled in this deployment.'
+              : 'Multi-sensor log ingestion, PyTorch GNN embeddings, and entity relationship topologies'}
+          </p>
         </div>
         <button
           onClick={handleRefresh}
@@ -76,28 +80,29 @@ export const SocDashboard = () => {
           color="purple"
         />
         <StatsCard
-          title="Behavioral Anomalies"
+          title={isServerlessDeployment ? 'Manually Flagged Events' : 'Behavioral Anomalies'}
           value={telemetry_metrics?.anomaly_events || 0}
-          subtitle="Flagged out-of-baseline events"
+          subtitle={isServerlessDeployment ? 'No automated detection in this profile' : 'Flagged out-of-baseline events'}
           icon={AlertCircle}
           color="red"
         />
         <StatsCard
           title="Mean Time To Detect (MTTD)"
-          value={telemetry_metrics?.mean_time_to_detect_mttd || "4.2 mins"}
-          subtitle="AI anomaly latency"
+          value={telemetry_metrics?.mean_time_to_detect_mttd || (isServerlessDeployment ? 'Not measured' : '4.2 mins')}
+          subtitle={isServerlessDeployment ? 'ML detection is disabled' : 'AI anomaly latency'}
           icon={Clock}
           color="cyan"
         />
         <StatsCard
           title="Mean Time To Investigate"
-          value={telemetry_metrics?.mean_time_to_investigate_mtti || "18.5 mins"}
-          subtitle="Automated correlation"
+          value={telemetry_metrics?.mean_time_to_investigate_mtti || (isServerlessDeployment ? 'Not measured' : '18.5 mins')}
+          subtitle={isServerlessDeployment ? 'ML correlation is disabled' : 'Automated correlation'}
           icon={ShieldAlert}
           color="green"
         />
       </div>
 
+      {!isServerlessDeployment && <>
       {/* ML Engine Status Cards */}
       <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5">
         <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 mb-3">
@@ -140,6 +145,7 @@ export const SocDashboard = () => {
         </div>
         <EntityGraph graphData={graphData} height="480px" />
       </div>
+      </>}
 
       {/* Live Telemetry Stream */}
       <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5">

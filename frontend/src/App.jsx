@@ -20,6 +20,7 @@ import { IncidentsPage } from './pages/IncidentsPage';
 import { InvestigationDetailPage } from './pages/InvestigationDetailPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { WasLabPage } from './pages/WasLabPage';
+import { isServerlessDeployment } from './services/api';
 
 // Returns the home dashboard path for a given role
 const getRoleDashboard = (role) => {
@@ -114,13 +115,13 @@ export const App = () => {
               </RoleRoute>
             </ProtectedLayout>
           } />
-          <Route path="/admin-control" element={
+          {!isServerlessDeployment && <Route path="/admin-control" element={
             <ProtectedLayout>
               <RoleRoute allowedRoles={['Administrator']}>
                 <SystemAdminPage />
               </RoleRoute>
             </ProtectedLayout>
-          } />
+          } />}
 
           {/* Shared modules — authenticated users with appropriate role access */}
           <Route path="/employees" element={<ProtectedLayout><EmployeesPage /></ProtectedLayout>} />
@@ -132,20 +133,20 @@ export const App = () => {
               </RoleRoute>
             </ProtectedLayout>
           } />
-          <Route path="/ueba" element={
+          {!isServerlessDeployment && <Route path="/ueba" element={
             <ProtectedLayout>
               <RoleRoute allowedRoles={['SOC Engineer', 'Administrator']}>
                 <UebaPage />
               </RoleRoute>
             </ProtectedLayout>
-          } />
-          <Route path="/anomalies" element={
+          } />}
+          {!isServerlessDeployment && <Route path="/anomalies" element={
             <ProtectedLayout>
               <RoleRoute allowedRoles={['SOC Engineer', 'Security Analyst', 'Administrator']}>
                 <AnomaliesPage />
               </RoleRoute>
             </ProtectedLayout>
-          } />
+          } />}
           <Route path="/risk-scoring" element={<ProtectedLayout><RiskScoringPage /></ProtectedLayout>} />
           <Route path="/alerts" element={<ProtectedLayout><AlertsPage /></ProtectedLayout>} />
           <Route path="/incidents" element={<ProtectedLayout><IncidentsPage /></ProtectedLayout>} />
@@ -159,13 +160,13 @@ export const App = () => {
           } />
 
           {/* WAS Security Lab — Administrator only (Analyst can view alerts via Alerts page) */}
-          <Route path="/was-lab" element={
+          {!isServerlessDeployment && <Route path="/was-lab" element={
             <ProtectedLayout>
               <RoleRoute allowedRoles={['Administrator']}>
                 <WasLabPage />
               </RoleRoute>
             </ProtectedLayout>
-          } />
+          } />}
 
           {/* Catch-all: redirect to role dashboard */}
           <Route path="*" element={<ProtectedLayout><RoleRedirect /></ProtectedLayout>} />

@@ -44,6 +44,10 @@ An enterprise-grade, AI-powered Insider Threat Behavioral Intelligence Platform 
 
 The system comes pre-seeded with 4 default personas. You can log in using any of them, or switch instantly using the top navigation persona selector:
 
+These demo credentials are for the full local/Docker profile only. The Vercel
+serverless profile does not create them; create its administrator with the
+bootstrap procedure below. Never reuse demo passwords for a production account.
+
 | Role | Email | Password | Primary Purpose |
 | :--- | :--- | :--- | :--- |
 | **Security Analyst** | `analyst@soc.corp` | `analyst123` | Triage alert feed, inspect XAI SHAP/LIME diagnostics, investigate incidents |
@@ -97,6 +101,56 @@ docker-compose up --build
 - **Web Application:** [http://localhost:3000](http://localhost:3000)
 - **FastAPI Backend API:** [http://localhost:8000](http://localhost:8000)
 - **PostgreSQL Database:** `localhost:5432` (`insider_threat_db`)
+
+### Option 3: Deploy the frontend and API to Vercel
+
+This profile runs the static frontend and a reduced FastAPI serverless API on
+Vercel. It still requires an external managed PostgreSQL database: Vercel
+functions cannot persist the SQLite file. The serverless API deliberately
+omits ML/UEBA/anomaly analysis, model retraining, attack simulation, and the
+WAS security lab. The standard local and Docker deployments keep the full
+backend.
+
+Create two Vercel projects from this repository:
+
+1. **Frontend project:** set **Root Directory** to `frontend`. Use
+   `npm run build` and output directory `dist`. Add these build environment
+   variables:
+   - `VITE_API_BASE_URL=https://your-api-project.vercel.app/api/v1`
+   - `VITE_SERVERLESS_PROFILE=true`
+2. **API project:** set **Root Directory** to `backend`. Keep the project root
+   at `backend` (not the repository root) so Vercel resolves `pyproject.toml`,
+   `requirements.txt`, and the `app` package from the same directory.
+   `pyproject.toml` explicitly selects `app.serverless_main:app`.
+   Add these environment variables:
+   - `SECRET_KEY`: a unique, securely generated value.
+   - `DATABASE_URL`: the managed PostgreSQL connection URL.
+   - `FRONTEND_URL`: the exact deployed frontend origin, such as
+     `https://your-frontend-project.vercel.app` (no trailing slash).
+3. Initialize the database and create the first administrator from a
+   machine that can connect to the managed database. In PowerShell, from the
+   repository root:
+
+   ```powershell
+   Set-Location backend
+   python -m pip install -r requirements.txt
+   $env:DATABASE_URL = "your-managed-postgresql-url"
+   $env:SECRET_KEY = "your-production-secret"
+   $env:BOOTSTRAP_ADMIN_EMAIL = "admin@example.com"
+   $env:BOOTSTRAP_ADMIN_PASSWORD = "use-a-unique-password-at-least-12-characters"
+   python -m app.initialize_serverless_db
+   ```
+
+   Use the same `DATABASE_URL` and `SECRET_KEY` in the API project's Vercel
+   environment variables. The bootstrap script creates the schema and one
+   administrator; it does not create demo users or sample records.
+4. Deploy both projects. Check
+   `https://your-api-project.vercel.app/api/health`, then sign in to the
+   frontend with the bootstrap administrator. The frontend uses Vercel SPA
+   routing for direct navigation to client-side pages.
+
+The frontend's `/api/v1` default and Vite development proxy remain unchanged
+when `VITE_API_BASE_URL` is not set.
 
 ---
 

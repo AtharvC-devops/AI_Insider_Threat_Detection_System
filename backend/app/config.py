@@ -38,6 +38,14 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 settings = Settings()
+for frontend_url in (os.getenv("FRONTEND_URL"), os.getenv("VERCEL_URL")):
+    if frontend_url:
+        origin = frontend_url.strip().rstrip("/")
+        if origin and "://" not in origin:
+            origin = f"https://{origin}"
+        if origin and origin not in settings.CORS_ORIGINS:
+            settings.CORS_ORIGINS.append(origin)
+
 if not settings.SECRET_KEY:
     if settings.APP_ENV.lower() in {"dev", "development", "demo"}:
         settings.SECRET_KEY = secrets.token_urlsafe(32)

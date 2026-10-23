@@ -4,7 +4,9 @@ import {
   AlertTriangle, ShieldAlert, Users, FolderCheck,
   Search, ExternalLink, ArrowUpRight, Cpu, Eye, CheckCircle2
 } from 'lucide-react';
-import { dashboardAPI, alertAPI, anomalyAPI } from '../services/api';
+import {
+  dashboardAPI, alertAPI, anomalyAPI, isServerlessDeployment
+} from '../services/api';
 import { StatsCard } from '../components/StatsCard';
 import { RiskBadge, SeverityBadge } from '../components/RiskBadge';
 import { AnomalyExplainModal } from '../components/AnomalyExplainModal';
@@ -129,7 +131,11 @@ export const AnalystDashboard = () => {
                 <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-cyan-400" /> Real-Time Threat Alerts & Triage Queue
                 </h3>
-                <p className="text-xs text-slate-500">Autonomous detections by UEBA & multi-model anomaly detection</p>
+                <p className="text-xs text-slate-500">
+                  {isServerlessDeployment
+                    ? 'Alert records and manual triage'
+                    : 'Autonomous detections by UEBA & multi-model anomaly detection'}
+                </p>
               </div>
               <Link to="/alerts" className="text-xs text-cyan-400 hover:underline flex items-center gap-1">
                 View all <ArrowUpRight className="w-3.5 h-3.5" />
@@ -155,12 +161,12 @@ export const AnalystDashboard = () => {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
+                      {!isServerlessDeployment && <button
                         onClick={() => handleOpenExplain(alt.employee_id)}
                         className="px-2.5 py-1.5 bg-slate-800 hover:bg-cyan-950 text-cyan-400 hover:text-cyan-300 border border-slate-700 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
                       >
                         <Cpu className="w-3 h-3" /> XAI Diagnosis
-                      </button>
+                      </button>}
                       {alt.status === 'New' && (
                         <button
                           onClick={() => handleAcknowledge(alt.id)}
@@ -247,12 +253,12 @@ export const AnalystDashboard = () => {
                   </div>
                   <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-800/80">
                     <span className="text-[11px] text-slate-400">{u.designation}</span>
-                    <button
+                    {!isServerlessDeployment && <button
                       onClick={() => handleOpenExplain(u.employee_id)}
                       className="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-0.5"
                     >
                       Diagnose <ArrowUpRight className="w-3 h-3" />
-                    </button>
+                    </button>}
                   </div>
                 </div>
               ))}
@@ -275,11 +281,11 @@ export const AnalystDashboard = () => {
       </div>
 
       {/* Explainability Modal */}
-      <AnomalyExplainModal
+      {!isServerlessDeployment && <AnomalyExplainModal
         isOpen={Boolean(selectedExplainEmp)}
         onClose={() => setSelectedExplainEmp(null)}
         explanationData={explainData}
-      />
+      />}
     </div>
   );
 };

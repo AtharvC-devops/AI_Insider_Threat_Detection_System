@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = '/api/v1';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
+export const isServerlessDeployment = import.meta.env.VITE_SERVERLESS_PROFILE === 'true';
 
 const apiClient = axios.create({
   baseURL: API_BASE,

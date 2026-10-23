@@ -1,4 +1,5 @@
 from typing import Dict, Any, List
+import os
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -80,8 +81,16 @@ def get_soc_dashboard_data(db: Session = Depends(get_db), current_user: User = D
         "telemetry_metrics": {
             "total_events_ingested": total_logs,
             "anomaly_events": anomalous_logs,
-            "mean_time_to_detect_mttd": "4.2 mins",
-            "mean_time_to_investigate_mtti": "18.5 mins",
+            "mean_time_to_detect_mttd": (
+                "Not measured"
+                if os.getenv("VERCEL") == "1"
+                else "4.2 mins"
+            ),
+            "mean_time_to_investigate_mtti": (
+                "Not measured"
+                if os.getenv("VERCEL") == "1"
+                else "18.5 mins"
+            ),
             "active_sensors": ["Host EDR", "Network Proxy", "USB Bus Monitor", "Active Directory", "Cloud Storage Gateway"]
         },
         "ml_engine_health": {
@@ -89,7 +98,11 @@ def get_soc_dashboard_data(db: Session = Depends(get_db), current_user: User = D
             "oneclass_svm_avg": avg_svm,
             "autoencoder_avg": avg_ae,
             "pytorch_gnn_avg": avg_gnn,
-            "model_status": "All 5 Engines Operational"
+            "model_status": (
+                "Disabled in serverless deployment"
+                if os.getenv("VERCEL") == "1"
+                else "All 5 Engines Operational"
+            )
         },
         "live_activity_stream": [
             {
@@ -163,7 +176,11 @@ def get_admin_dashboard_data(db: Session = Depends(get_db), current_user: User =
         "system_status": {
             "backend_status": "Online (FastAPI 2.0)",
             "database_status": "PostgreSQL / SQLite Connection Active",
-            "ml_engine_pipeline": "PyTorch + Scikit-Learn + NetworkX Ready",
+            "ml_engine_pipeline": (
+                "Disabled in serverless deployment"
+                if os.getenv("VERCEL") == "1"
+                else "PyTorch + Scikit-Learn + NetworkX Ready"
+            ),
             "total_users": db.query(User).count(),
             "total_employees": db.query(Employee).count(),
             "total_activity_logs": db.query(ActivityLog).count(),

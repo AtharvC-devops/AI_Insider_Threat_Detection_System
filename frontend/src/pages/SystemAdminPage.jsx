@@ -3,7 +3,7 @@ import {
   Settings, Server, Cpu, Zap, Shield, Play,
   RefreshCw, CheckCircle2, AlertTriangle, FileText, Database
 } from 'lucide-react';
-import { adminAPI, authAPI } from '../services/api';
+import { adminAPI, authAPI, isServerlessDeployment } from '../services/api';
 import { StatsCard } from '../components/StatsCard';
 
 export const SystemAdminPage = () => {
@@ -63,18 +63,64 @@ export const SystemAdminPage = () => {
     }
   };
 
+  if (isServerlessDeployment && loading) {
+    return <div className="p-8 text-center text-slate-400">Loading serverless administration data...</div>;
+  }
+
+  if (isServerlessDeployment) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-white">System Administration</h2>
+          <p className="text-xs text-slate-400 mt-2">
+            Vercel serverless profile: managed PostgreSQL, operator access, and audit history are available. ML retraining and attack simulation are disabled.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5">
+            <h3 className="text-sm font-bold text-slate-100 mb-4">SOC Operator Accounts</h3>
+            <div className="space-y-3">
+              {users.map((user) => (
+                <div key={user.id} className="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                  <p className="text-xs font-bold text-slate-100">{user.name}</p>
+                  <p className="text-[10px] text-slate-500 font-mono">{user.email} · {user.role}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5">
+            <h3 className="text-sm font-bold text-slate-100 mb-4">Recent Audit Events</h3>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {auditLogs.map((log) => (
+                <div key={log.id} className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs">
+                  <p className="font-mono text-cyan-400">{log.action}</p>
+                  <p className="text-slate-300">{log.details}</p>
+                  <p className="text-[10px] text-slate-500">{log.user_email}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border border-slate-800 rounded-2xl p-6">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span>System Administration & Adversarial Simulator</span>
+            <span>{isServerlessDeployment ? 'System Administration' : 'System Administration & Adversarial Simulator'}</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
               ROOT CONSOLE
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">Platform telemetry, ML model lifecycle pipeline retraining, and live Red Team attack injections</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {isServerlessDeployment
+              ? 'Operator access and audit history for the serverless core API.'
+              : 'Platform telemetry, ML model lifecycle pipeline retraining, and live Red Team attack injections'}
+          </p>
         </div>
       </div>
 
@@ -90,17 +136,24 @@ export const SystemAdminPage = () => {
         <StatsCard
           title="Database Status"
           value="Connected"
-          subtitle="PostgreSQL / SQLite Storage Engine"
+          subtitle={isServerlessDeployment ? 'Managed PostgreSQL' : 'PostgreSQL / SQLite Storage Engine'}
           icon={Database}
           color="green"
         />
-        <StatsCard
+        {!isServerlessDeployment && <StatsCard
           title="ML Engine Pipelines"
           value="5 Active"
           subtitle="IsoForest, SVM, AE, Graph, GNN"
           icon={Cpu}
           color="purple"
-        />
+        />}
+        {isServerlessDeployment && <StatsCard
+          title="Deployment Profile"
+          value="Core API"
+          subtitle="ML features disabled"
+          icon={Server}
+          color="purple"
+        />}
         <StatsCard
           title="Audit Trail Logs"
           value={auditLogs.length || 0}

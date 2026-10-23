@@ -6,6 +6,7 @@ import {
   Zap, ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isServerlessDeployment } from '../services/api';
 
 // Role-based navigation — each role only sees its authorized items
 const ROLE_NAV = {
@@ -41,7 +42,10 @@ const ROLE_NAV = {
 
 export const Sidebar = () => {
   const { role } = useAuth();
-  const navItems = ROLE_NAV[role] || ROLE_NAV['Security Analyst'];
+  const navItems = (ROLE_NAV[role] || ROLE_NAV['Security Analyst']).filter((item) => (
+    !isServerlessDeployment ||
+    !['/ueba', '/anomalies', '/was-lab', '/admin-control'].includes(item.path)
+  ));
 
   return (
     <aside className="w-64 bg-[#0d1320] border-r border-slate-800 flex flex-col justify-between p-4 min-h-[calc(100vh-4rem)]">
@@ -75,10 +79,14 @@ export const Sidebar = () => {
       {/* System Status Pill */}
       <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
         <div className="flex items-center justify-between text-slate-300 font-medium">
-          <span>ML Ensemble</span>
-          <span className="text-emerald-400 font-mono">100% ONLINE</span>
+          <span>{isServerlessDeployment ? 'Deployment' : 'ML Ensemble'}</span>
+          <span className={`font-mono ${isServerlessDeployment ? 'text-amber-400' : 'text-emerald-400'}`}>
+            {isServerlessDeployment ? 'CORE API' : '100% ONLINE'}
+          </span>
         </div>
-        <p className="text-[10px] text-slate-500 font-mono">5 Models Active &bull; FastAPI 2.0</p>
+        <p className="text-[10px] text-slate-500 font-mono">
+          {isServerlessDeployment ? 'ML features disabled' : '5 Models Active - FastAPI 2.0'}
+        </p>
         <p className="text-[10px] text-slate-600 font-mono">Role: {role}</p>
       </div>
     </aside>

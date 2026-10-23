@@ -1,0 +1,25 @@
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+admin_token.json
+
+# Local databases and generated logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+pytest*.txt
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# JavaScript dependencies and build/test output
+node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
